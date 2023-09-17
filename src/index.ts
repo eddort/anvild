@@ -3,6 +3,8 @@ import {
   CreateAnvilSchema,
   type CreateAnvilInternal,
   type CreateAnvil,
+  type AnvilOptions,
+  AnvilOptionsSchema,
 } from "./schema";
 import { toArgs } from "./options-to-args";
 import { waitForServer } from "./wait-for-server";
@@ -89,14 +91,27 @@ export const cleanAll = async () => {
   }
 };
 
+export const cleanByConfig = async (anvilConfig: AnvilOptions) => {
+  const config = await AnvilOptionsSchema.parseAsync(anvilConfig);
+  const args = toArgs(config);
+  const idempotentKey = args.join("-");
+  const list = await docker.listContainers({
+    filters: {
+      label: ["anvild=anvild", `anvild_idempotent_key=${idempotentKey}`],
+    },
+  });
+
+  if (!list.length) return false;
+
+  for (const service of list) {
+    const container = await docker.getContainer(service.Id);
+    await container.stop();
+  }
+
+  return true;
+};
+
 export const createAnvil = async (opts: CreateAnvil) => {
   const props = await CreateAnvilSchema.parseAsync(opts);
   return await createAnvilInternal(props);
 };
-
-(async () => {
-  await cleanAll();
-  const node = await createAnvil({ instance: { attachLogs: false } });
-  await node.stop();
-  console.log(node);
-})();
