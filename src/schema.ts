@@ -180,4 +180,31 @@ export const AnvilOptionsSchema = z.object({
     .describe("Number of blocks with transactions to keep in memory."),
 });
 
-export type AnvilOptions = z.infer<typeof AnvilOptionsSchema>;
+export type AnvilOptions = z.input<typeof AnvilOptionsSchema>;
+export type AnvilOptionsInternal = z.infer<typeof AnvilOptionsSchema>;
+
+export const InstanceOptionsSchema = z.object({
+  socketPath: z.string().optional().describe("Docker socket path"),
+  attachLogs: z
+    .boolean()
+    .default(true)
+    .describe("Attack Anvil logs to current process"),
+  forceRecreate: z
+    .boolean()
+    .default(true)
+    .describe("Force re-create instance with same configuration"),
+});
+
+export type InstanceOptions = z.input<typeof InstanceOptionsSchema>;
+export type InstanceOptionsInternal = z.infer<typeof InstanceOptionsSchema>;
+
+export const CreateAnvilSchema = z.object({
+  anvil: AnvilOptionsSchema.optional().default({ host: "0.0.0.0", port: 8545 }),
+  instance: InstanceOptionsSchema.optional().default({
+    attachLogs: true,
+    forceRecreate: true,
+  }),
+});
+
+export type CreateAnvil = z.input<typeof CreateAnvilSchema>;
+export type CreateAnvilInternal = z.infer<typeof CreateAnvilSchema>;

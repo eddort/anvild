@@ -1,12 +1,13 @@
 import Docker from "dockerode";
-import { AnvilOptionsSchema, type AnvilOptions } from "./schema";
+import {
+  CreateAnvilSchema,
+  type CreateAnvilInternal,
+  type CreateAnvil,
+} from "./schema";
 import { toArgs } from "./options-to-args";
+import { waitForServer } from "./wait-for-server";
 
 const docker = new Docker();
-
-type CreateAnvilDeps = {
-  anvil: AnvilOptions;
-};
 
 const createPortConfig = (port: number) => {
   const config = {
@@ -30,20 +31,13 @@ const createPortConfig = (port: number) => {
   return config;
 };
 
-const createAnvil = async ({ anvil }: CreateAnvilDeps) => {
-  const list = await docker.listContainers({
-    filters: { label: ["anvild=anvild"] },
-  });
-  console.log(list);
-  if (list.length) {
-    for (const service of list) {
-      const container = await docker.getContainer(service.Id);
-      await container.stop();
-    }
-    //   console.log(list);
-    return;
-  }
-  const args = toArgs(anvil).join(" ");
+const createAnvilInternal = async ({
+  anvil,
+  instance,
+}: CreateAnvilInternal) => {
+  const args = toArgs(anvil);
+  const argsString = args.join(" ");
+  const idempotentKey = args.join("-");
   const container = await docker.createContainer({
     Image: "ghcr.io/foundry-rs/foundry:latest",
     AttachStdin: false,
@@ -52,26 +46,57 @@ const createAnvil = async ({ anvil }: CreateAnvilDeps) => {
     Tty: process.stdout.isTTY,
     OpenStdin: false,
     StdinOnce: false,
-    Cmd: [`anvil ${args}`],
-    Labels: { anvild: "anvild" },
+    Cmd: [`anvil ${argsString}`],
+    Labels: { anvild: "anvild", anvild_idempotent_key: idempotentKey },
     ...createPortConfig(anvil.port),
   });
-  console.log(container.id);
+
   await container.start();
 
-  const stream = await container.attach({
-    stream: true,
-    stdout: true,
-    stderr: true,
+  if (instance.attachLogs) {
+    const stream = await container.attach({
+      stream: true,
+      stdout: true,
+      stderr: true,
+    });
+
+    stream.pipe(process.stdout);
+  }
+
+  await waitForServer(anvil.port);
+
+  return {
+    containerId: container.id,
+    idempotentKey,
+    host: "http://127.0.0.1",
+    port: anvil.port,
+    async stop() {
+      return await container.stop();
+    },
+  };
+};
+
+export const cleanAll = async () => {
+  const list = await docker.listContainers({
+    filters: { label: ["anvild=anvild"] },
   });
 
-  stream.pipe(process.stdout);
-  //   console.log(container, status);
+  if (!list.length) return;
+
+  for (const service of list) {
+    const container = await docker.getContainer(service.Id);
+    await container.stop();
+  }
+};
+
+export const createAnvil = async (opts: CreateAnvil) => {
+  const props = await CreateAnvilSchema.parseAsync(opts);
+  return await createAnvilInternal(props);
 };
 
 (async () => {
-  const anvil = await AnvilOptionsSchema.parseAsync({ port: 9002 });
-  await createAnvil({
-    anvil,
-  });
+  await cleanAll();
+  const node = await createAnvil({ instance: { attachLogs: false } });
+  await node.stop();
+  console.log(node);
 })();

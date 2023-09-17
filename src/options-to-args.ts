@@ -4,24 +4,26 @@ function toFlagCase(key: string) {
 export function toArgs(options: {
   [key: string]: string | boolean | number | bigint | undefined;
 }) {
-  return Object.entries(options).flatMap(([key, value]) => {
-    if (value === undefined) {
-      return [];
-    }
+  return Object.entries(options)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .flatMap(([key, value]) => {
+      if (value === undefined) {
+        return [];
+      }
 
-    const flag = toFlagCase(key);
+      const flag = toFlagCase(key);
 
-    if (value === false) {
-      return [];
-    } else if (value === true) {
-      return [flag];
-    }
+      if (value === false) {
+        return [];
+      } else if (value === true) {
+        return [flag];
+      }
 
-    const stringified = value.toString();
-    if (stringified === "") {
-      return [flag];
-    }
+      const stringified = value.toString();
+      if (stringified === "") {
+        return [flag];
+      }
 
-    return [flag, stringified];
-  });
+      return [flag, stringified];
+    });
 }
