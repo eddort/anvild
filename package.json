@@ -1,9 +1,18 @@
 {
-  "name": "anvil",
-  "version": "0.0.1",
+  "name": "anvild",
+  "version": "0.0.6",
   "author": "Eddort <webisforce@gmail.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eddort/anvild.git"
+  },
+  "bugs": {
+    "url": "https://github.com/eddort/anvild/issues"
+  },
+  "description": "Anvild — simple Anvil Nodejs binding",
   "type": "module",
+  "keywords": ["anvil", "foundry", "forge", "eth", "ethereum"],
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/types/index.d.ts",
@@ -18,6 +27,9 @@
   },
   "dependencies": {
     "dockerode": "^3.3.5"
+  },
+  "peerDependencies": {
+    "zod": "^3.22.2"
   },
   "scripts": {
     "dev": "ts-node src/index",
