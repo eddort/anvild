@@ -7,7 +7,7 @@ import {
   AnvilOptionsSchema,
 } from "./schema";
 import { toArgs } from "./options-to-args";
-import { waitForServer } from "./wait-for-server";
+import { waitForServerPort, waitForServerStdout } from "./wait-for-server";
 
 const docker = new Docker();
 
@@ -60,17 +60,20 @@ const createAnvilInternal = async ({
 
   await container.start();
 
+  const stream = await container.attach({
+    stream: true,
+    stdout: true,
+    stderr: true,
+  });
+
+  await waitForServerPort(anvil.port);
+  await waitForServerStdout(stream);
+
   if (instance.attachLogs) {
-    const stream = await container.attach({
-      stream: true,
-      stdout: true,
-      stderr: true,
-    });
-
     stream.pipe(process.stdout);
+  } else {
+    stream.end();
   }
-
-  await waitForServer(anvil.port);
 
   return {
     containerId: container.id,

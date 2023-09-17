@@ -1,6 +1,6 @@
 import net from "net";
 
-export function waitForServer(port: number) {
+export function waitForServerPort(port: number) {
   return new Promise((resolve, reject) => {
     const serverCheckInterval = 500;
     const maxAttempts = 30;
@@ -28,3 +28,14 @@ export function waitForServer(port: number) {
     const interval = setInterval(checkServer, serverCheckInterval);
   });
 }
+
+export const waitForServerStdout = (stream: NodeJS.ReadWriteStream) => {
+  return new Promise((res) => {
+    stream.on("data", (data: any) => {
+      const output = data.toString();
+      if (output.includes("Listening")) {
+        res(true);
+      }
+    });
+  });
+};
