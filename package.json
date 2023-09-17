@@ -1,0 +1,19 @@
+{
+  "name": "anvil",
+  "version": "0.0.1",
+  "main": "index.js",
+  "type": "module",
+  "author": "Eddort <webisforce@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "dockerode": "^3.3.5"
+  },
+  "scripts": {
+    "dev": "ts-node src/index"
+  },
+  "devDependencies": {
+    "@types/dockerode": "^3.3.19",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2"
+  }
+}
