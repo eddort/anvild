@@ -1,15 +1,30 @@
 {
   "name": "anvil",
   "version": "0.0.1",
-  "main": "index.js",
-  "type": "module",
   "author": "Eddort <webisforce@gmail.com>",
   "license": "MIT",
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
+  "typings": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "default": "./dist/cjs/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "dependencies": {
     "dockerode": "^3.3.5"
   },
   "scripts": {
-    "dev": "ts-node src/index"
+    "dev": "ts-node src/index",
+    "clean": "rm -rf dist",
+    "build": "yarn run clean && yarn run build:cjs && yarn run build:esm+types",
+    "build:cjs": "tsc --project tsconfig.json --module commonjs --verbatimModuleSyntax false --outDir ./dist/cjs",
+    "build:esm+types": "tsc --project tsconfig.json --module es2020 --outDir ./dist/esm --declaration --declarationMap --declarationDir ./dist/types"
   },
   "devDependencies": {
     "@types/dockerode": "^3.3.19",
