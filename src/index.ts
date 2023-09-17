@@ -1,63 +1,49 @@
 import Docker from "dockerode";
-import fs from "node:fs/promises";
-import path from "node:path";
+import { AnvilOptionsSchema, type AnvilOptions } from "./schema";
+import { toArgs } from "./options-to-args";
 
-type State = {
-  containerId: string | null;
-};
-
-export class StateManager {
-  statePath: string = path.join(process.cwd(), ".anvild", "state.json");
-  constructor(statePath?: string) {
-    if (statePath) this.statePath = statePath;
-  }
-  async checkFile() {
-    try {
-      const stateFile = await fs.stat(this.statePath);
-      return stateFile.isFile();
-    } catch (error: any) {
-      return false;
-    }
-  }
-  async readState(): Promise<State> {
-    const isExists = await this.checkFile();
-    if (isExists) return JSON.parse(await fs.readFile(this.statePath, "utf-8"));
-    return { containerId: null };
-  }
-
-  async saveState(state: State) {
-    const isExists = await this.checkFile();
-    // if (!isExists)
-    //   await fs.mkdir(path.dirname(this.statePath), { recursive: true });
-    console.log(path.dirname(this.statePath), isExists);
-    if (isExists) return;
-    return await fs.writeFile(this.statePath, JSON.stringify(state), "utf-8");
-  }
-}
+const docker = new Docker();
 
 type CreateAnvilDeps = {
-  docker: Docker;
-  stateManager: StateManager;
+  anvil: AnvilOptions;
 };
 
-console.log(process.stdout.isTTY);
-const createAnvil = async ({ docker, stateManager }: CreateAnvilDeps) => {
-//   const list = await docker.listContainers({
-//     filters: { label: ["anvild=anvild"] },
-//   });
-//   if (list.length) {
-//     for (const service of list) {
-//       const container = await docker.getContainer(service.Id);
-//       await container.stop();
-//     }
-//     console.log(list);
-//     return;
-//   }
-  const state = await stateManager.readState();
-  if (state) {
-    console.log(state);
-    // return;
+const createPortConfig = (port: number) => {
+  const config = {
+    ExposedPorts: {} as { [key: string]: {} },
+    HostConfig: {
+      PortBindings: {} as {
+        [key: string]: {
+          HostIP: string;
+          HostPort: string;
+        }[];
+      },
+    },
+  };
+  config.ExposedPorts[`${port}/tcp`] = {};
+  config.HostConfig.PortBindings[`${port}/tcp`] = [
+    {
+      HostIP: "0.0.0.0",
+      HostPort: port.toString(),
+    },
+  ];
+  return config;
+};
+
+const createAnvil = async ({ anvil }: CreateAnvilDeps) => {
+  const list = await docker.listContainers({
+    filters: { label: ["anvild=anvild"] },
+  });
+  console.log(list);
+  if (list.length) {
+    for (const service of list) {
+      const container = await docker.getContainer(service.Id);
+      await container.stop();
+    }
+    //   console.log(list);
+    return;
   }
+  const args = toArgs(anvil).join(" ");
   const container = await docker.createContainer({
     Image: "ghcr.io/foundry-rs/foundry:latest",
     AttachStdin: false,
@@ -66,21 +52,9 @@ const createAnvil = async ({ docker, stateManager }: CreateAnvilDeps) => {
     Tty: process.stdout.isTTY,
     OpenStdin: false,
     StdinOnce: false,
-    Cmd: ["anvil --port 9090 --host 0.0.0.0"],
+    Cmd: [`anvil ${args}`],
     Labels: { anvild: "anvild" },
-    ExposedPorts: {
-      "9090/tcp": {},
-    },
-    HostConfig: {
-      PortBindings: {
-        "9090/tcp": [
-          {
-            HostIP: "0.0.0.0",
-            HostPort: "9090",
-          },
-        ],
-      },
-    },
+    ...createPortConfig(anvil.port),
   });
   console.log(container.id);
   await container.start();
@@ -90,15 +64,14 @@ const createAnvil = async ({ docker, stateManager }: CreateAnvilDeps) => {
     stdout: true,
     stderr: true,
   });
+
   stream.pipe(process.stdout);
   //   console.log(container, status);
 };
 
 (async () => {
-  // const creat
+  const anvil = await AnvilOptionsSchema.parseAsync({ port: 9002 });
   await createAnvil({
-    docker: new Docker(),
-    stateManager: new StateManager("./"),
+    anvil,
   });
-  //   console.log(ls);
 })();
