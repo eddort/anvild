@@ -43,6 +43,9 @@ import { cleanAll, createAnvil } from "anvild";
 })();
 ```
 
+## Alternatives
+- https://github.com/wagmi-dev/anvil.js — nodejs wrapper for Anvil. Depends on local Anvil installation.
+
 ## Api reference
 
 ### Anvil Options
