@@ -40,6 +40,11 @@ const createAnvilInternal = async ({
   const args = toArgs(anvil);
   const argsString = args.join(" ");
   const idempotentKey = args.join("-");
+
+  if (instance.forceRecreate) {
+    await cleanByConfig(anvil);
+  }
+
   const container = await docker.createContainer({
     Image: "ghcr.io/foundry-rs/foundry:latest",
     AttachStdin: false,
@@ -112,6 +117,6 @@ export const cleanByConfig = async (anvilConfig: AnvilOptions) => {
 };
 
 export const createAnvil = async (opts: CreateAnvil) => {
-  const props = await CreateAnvilSchema.parseAsync(opts);
-  return await createAnvilInternal(props);
+  const config = await CreateAnvilSchema.parseAsync(opts);
+  return await createAnvilInternal(config);
 };
