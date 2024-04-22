@@ -1,5 +1,11 @@
 name: Tests and checks
-on: pull_request
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
 jobs:
   test:
     name: App tests
@@ -11,8 +17,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 14
-          cache: 'yarn'
+          cache: "yarn"
       - name: Install dependencies
         run: yarn install --immutable
       - name: Run tests
         run: yarn test
+      - name: Test build
+        run: yarn build
