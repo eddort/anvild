@@ -12,6 +12,5 @@ describe(
 
       await node.stop();
     });
-  },
-  { timeout: 30_000 }
+  }
 );
