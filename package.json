@@ -37,6 +37,7 @@
   },
   "scripts": {
     "dev": "ts-node src/index",
+    "test": "vitest",
     "clean": "rm -rf dist",
     "build": "yarn run clean && yarn run build:cjs && yarn run build:esm+types",
     "build:cjs": "tsc --project tsconfig.json --module commonjs --verbatimModuleSyntax false --outDir ./dist/cjs",
@@ -45,6 +46,8 @@
   "devDependencies": {
     "@types/dockerode": "^3.3.19",
     "ts-node": "^10.9.1",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "vite": "^4.1.4",
+    "vitest": "^0.29.2"
   }
 }
