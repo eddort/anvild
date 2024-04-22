@@ -1,14 +1,17 @@
 import { createAnvil } from ".";
 
-describe('base', async () => {
-    it('works', async () => {
-        const node = await createAnvil({
-            anvil: { forkUrl:  "https://cloudflare-eth.com" },
-          });
+describe(
+  "base",
+  async () => {
+    it("works", async () => {
+      const node = await createAnvil({
+        anvil: { forkUrl: "https://cloudflare-eth.com" },
+      });
 
+      console.log(node.host, node.port, node.containerId);
 
-          console.log(node.host, node.port, node.containerId)
-
-          await node.stop()
-    })
-})
+      await node.stop();
+    });
+  },
+  { timeout: 30_000 }
+);
