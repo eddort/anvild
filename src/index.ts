@@ -46,7 +46,7 @@ const createAnvilInternal = async ({
   }
 
   const container = await docker.createContainer({
-    Image: "ghcr.io/foundry-rs/foundry:latest",
+    Image: "ghcr.io/foundry-rs/foundry:master",
     AttachStdin: false,
     AttachStdout: true,
     AttachStderr: true,
