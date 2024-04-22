@@ -69,9 +69,8 @@ const createAnvilInternal = async ({
     await cleanByConfig(anvil);
   }
 
-  const sss = await pullImage(ANVIL_DEFAULT_IMAGE);
-  // console.log(sss);
-  // docker.modem.followProgress();
+  await pullImage(ANVIL_DEFAULT_IMAGE);
+
   const container = await docker.createContainer({
     Image: ANVIL_DEFAULT_IMAGE,
     AttachStdin: false,
