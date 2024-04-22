@@ -9,7 +9,31 @@ import {
 import { toArgs } from "./options-to-args";
 import { waitForServerPort, waitForServerStdout } from "./wait-for-server";
 
+const ANVIL_DEFAULT_IMAGE = "ghcr.io/foundry-rs/foundry:master";
+
 const docker = new Docker();
+
+async function pullImage(image: string) {
+  return new Promise((resolve, reject) => {
+    docker.pull(image, (err: any, stream: NodeJS.ReadableStream) => {
+      if (err) {
+        reject(err);
+      } else {
+        docker.modem.followProgress(
+          stream,
+          (err, res) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(res);
+            }
+          }
+          // (event) => console.log(event.status)
+        );
+      }
+    });
+  });
+}
 
 const createPortConfig = (port: number) => {
   const config = {
@@ -45,8 +69,11 @@ const createAnvilInternal = async ({
     await cleanByConfig(anvil);
   }
 
+  const sss = await pullImage(ANVIL_DEFAULT_IMAGE);
+  // console.log(sss);
+  // docker.modem.followProgress();
   const container = await docker.createContainer({
-    Image: "ghcr.io/foundry-rs/foundry:master",
+    Image: ANVIL_DEFAULT_IMAGE,
     AttachStdin: false,
     AttachStdout: true,
     AttachStderr: true,
