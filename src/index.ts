@@ -101,15 +101,18 @@ const createAnvilInternal = async ({
     stream.end();
   }
 
-  return {
+  const node = {
     containerId: container.id,
     idempotentKey,
     host: "http://127.0.0.1",
     port: anvil.port,
+    url: `http://127.0.0.1:${anvil.port}`,
     async stop() {
       return await container.stop();
     },
   };
+
+  return node;
 };
 
 export const cleanAll = async () => {
